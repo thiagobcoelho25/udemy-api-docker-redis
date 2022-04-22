@@ -1,33 +1,42 @@
-import Customer from '@modules/customers/infra/typeorm/entities/Customer';
-import { EntityRepository, Repository } from 'typeorm';
+import { ICreateOrder } from '@modules/orders/domain/models/ICreateOrder';
+import { IOrderPaginate } from '@modules/orders/domain/models/IOrderPaginate';
+import { IOrdersRepository } from '@modules/orders/domain/repositories/IOrdersRepository';
+import { getRepository, Repository } from 'typeorm';
 import Order from '../entities/Order';
 
-interface IProduct {
-  product_id: string;
-  price: number;
-  quantity: number;
-}
+export class OrderRepository implements IOrdersRepository {
+  private ormRepository: Repository<Order>;
 
-interface IRequest {
-  customer: Customer;
-  products: IProduct[];
-}
+  constructor() {
+    this.ormRepository = getRepository(Order);
+  }
 
-@EntityRepository(Order)
-export class OrderRepository extends Repository<Order> {
   public async findById(id: string): Promise<Order | undefined> {
-    const order = await this.findOne(id, {
+    const order = await this.ormRepository.findOne(id, {
       relations: ['orders_products', 'customer'],
     });
 
     return order;
   }
 
-  public async createOrder({ customer, products }: IRequest): Promise<Order> {
-    const order = this.create({ customer, orders_products: products });
+  public async create({ customer, products }: ICreateOrder): Promise<Order> {
+    const order = this.ormRepository.create({
+      customer,
+      orders_products: products,
+    });
 
-    await this.save(order);
+    await this.ormRepository.save(order);
 
     return order;
+  }
+
+  public async findAllPaginate(): Promise<IOrderPaginate> {
+    const orders = await this.ormRepository
+      .createQueryBuilder('orders')
+      .leftJoinAndSelect('orders.customer', 'customer')
+      .leftJoinAndSelect('orders.orders_products', 'orders_products')
+      .paginate();
+
+    return orders as IOrderPaginate;
   }
 }
