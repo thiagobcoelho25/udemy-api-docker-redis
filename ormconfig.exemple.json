@@ -1,13 +1,13 @@
 {
   "type": "postgres",
-  "host": "localhost",
+  "host": "db",
   "port": 5432,
   "username": "postgres",
   "password": "docker",
   "database": "apivendas",
-  "entities": ["./src/modules/**/infra/typeorm/entities/*.js"],
+  "entities": ["./src/modules/**/infra/typeorm/entities/*.ts"],
   "migrations": [
-    "./src/shared/infra/typeorm/migrations/*.js"
+    "./src/shared/infra/typeorm/migrations/*.ts"
   ],
   "cli": {
     "migrationsDir": "./src/shared/infra/typeorm/migrations"
